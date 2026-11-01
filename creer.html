@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Créer mon lien</title>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --gold: #f6cf63; --cream: #fff7e6; --red: #c0272d; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; font-family: 'Nunito', system-ui, sans-serif; color: var(--cream); line-height: 1.5;
+    background: radial-gradient(ellipse 120% 70% at 50% -10%, #238052 0%, #0f4a30 38%, #082a1d 70%, #04130d 100%) fixed; }
+  main { max-width: 560px; margin: 0 auto; padding: 36px 18px 60px; }
+  h1 { font-family: 'Great Vibes', cursive; font-weight: 400; font-size: 3rem; margin: 0 0 4px; text-align: center; color: var(--gold); }
+  p.lead { text-align: center; margin: 0 0 22px; opacity: .9; }
+  .box { background: rgba(255,255,255,.09); border: 1px solid rgba(246,207,99,.4); border-radius: 22px; padding: 18px 16px; backdrop-filter: blur(8px); }
+  label { display: block; font-weight: 800; margin: 0 0 6px; color: #ffe9b8; }
+  input { width: 100%; padding: 12px 13px; border: 1.5px solid #efdfb9; border-radius: 12px; font: inherit; background: #fff; color: #2d2118; }
+  button { margin-top: 12px; width: 100%; border: 0; border-radius: 12px; padding: 13px; font: inherit; font-weight: 800; color: #fff; cursor: pointer;
+    background: linear-gradient(180deg, #d9373e, #8f161c); box-shadow: 0 3px 0 #5e0d12; }
+  button.alt { background: linear-gradient(180deg, #ffe08a, #d4a02a); color: #4a2e00; box-shadow: 0 3px 0 #8a5f0b; }
+  .err { color: #ffb3ad; min-height: 1.3em; margin: 8px 0 0; font-size: .92rem; }
+  #res { display: none; margin-top: 18px; }
+  #out { word-break: break-all; background: #fff; color: #2d2118; border-radius: 12px; padding: 12px; font-weight: 700; }
+  ol { padding-left: 20px; margin: 18px 0 0; font-size: .95rem; }
+  li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Créer mon lien</h1>
+  <p class="lead">Colle l'adresse de ton application, et récupère le lien à envoyer à ta famille. 🎄</p>
+  <div class="box">
+    <label for="u">Adresse de ton application (elle finit par <b>/exec</b>)</label>
+    <input id="u" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
+    <p class="err" id="e"></p>
+    <button id="go">✨ Créer mon lien</button>
+    <div id="res">
+      <label>Ton lien famille</label>
+      <div id="out"></div>
+      <button class="alt" id="copy">📋 Copier le lien</button>
+      <ol>
+        <li>Ouvre-le une première fois toi-même : tu pourras créer ton compte <b>administrateur</b>.</li>
+        <li>Dans l'onglet <b>Admin</b>, définis le <b>code famille</b> et ajoute les membres.</li>
+        <li>Envoie ensuite le lien et le code famille à ta famille.</li>
+      </ol>
+    </div>
+  </div>
+</main>
+<script>
+(function () {
+  var base = location.origin + location.pathname.replace(/creer\.html$/, '');
+  var u = document.getElementById('u'), e = document.getElementById('e'), res = document.getElementById('res'), out = document.getElementById('out');
+  function make() {
+    var v = u.value.trim();
+    res.style.display = 'none'; e.textContent = '';
+    if (!v) { e.textContent = 'Colle d’abord l’adresse de ton application.'; return; }
+    if (/\/dev(\?|$)/.test(v)) { e.textContent = 'Cette adresse finit par /dev (test). Il faut celle qui finit par /exec.'; return; }
+    var m = /\/macros\/(?:u\/\d+\/)?s\/(AKfy[\w-]{30,200})\/exec/.exec(v);
+    if (!m) { e.textContent = 'Adresse non reconnue. Elle doit ressembler à https://script.google.com/macros/s/…/exec'; return; }
+    out.textContent = base + '?s=' + m[1];
+    res.style.display = 'block';
+  }
+  document.getElementById('go').onclick = make;
+  u.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') make(); });
+  document.getElementById('copy').onclick = function () {
+    var b = this, t = out.textContent;
+    function ok() { b.textContent = '✅ Lien copié !'; setTimeout(function () { b.textContent = '📋 Copier le lien'; }, 2000); }
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(ok, function () { window.prompt('Copie ce lien :', t); });
+    else window.prompt('Copie ce lien :', t);
+  };
+})();
+</script>
+</body>
+</html>

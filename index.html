@@ -204,11 +204,26 @@
   'use strict';
 
   /* ---------- utilitaires ---------- */
+  // Hébergé hors Apps Script : ?s=IDENTIFIANT permet d'utiliser le serveur d'une autre famille.
+  // Sans ?s=, on utilise le serveur par défaut. Les données mémorisées sont séparées par serveur.
+  var API_URL = window.NOEL_API_URL || '', NS = '', BAD_LINK = false;
+  (function () {
+    if (!API_URL) return;
+    var m = /[?&]s=([^&#]*)/.exec(location.search);
+    if (!m) return;
+    if (/^AKfy[\w-]{30,200}$/.test(m[1])) {
+      API_URL = 'https://script.google.com/macros/s/' + m[1] + '/exec';
+      NS = m[1].slice(-10) + ':';
+    } else {
+      BAD_LINK = true;
+    }
+  })();
+
   var mem = {};
   var store = {
-    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return mem[k] || null; } },
-    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) { mem[k] = v; } },
-    del: function (k) { try { localStorage.removeItem(k); } catch (e) { delete mem[k]; } }
+    get: function (k) { k = NS + k; try { return localStorage.getItem(k); } catch (e) { return mem[k] || null; } },
+    set: function (k, v) { k = NS + k; try { localStorage.setItem(k, v); } catch (e) { mem[k] = v; } },
+    del: function (k) { k = NS + k; try { localStorage.removeItem(k); } catch (e) { delete mem[k]; } }
   };
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -246,7 +261,6 @@
 
   var token = store.get('noel_token');
   // Hébergé sur Apps Script : google.script.run. Hébergé ailleurs : fetch vers l'URL /exec (config.js).
-  var API_URL = window.NOEL_API_URL || '';
   function call(action, p) {
     progress(true);
     return new Promise(function (resolve, reject) {
@@ -266,7 +280,9 @@
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: action, token: token, p: p || {} })
-        }).then(function (r) { return r.json(); }).then(fin, fail);
+        }).then(function (r) { return r.json(); }).then(fin, function () {
+          fail({ message: 'Impossible de joindre le serveur. Vérifie ta connexion et que le lien est complet.' });
+        });
       } else {
         google.script.run.withSuccessHandler(fin).withFailureHandler(fail).api(action, token, p || {});
       }
@@ -513,6 +529,10 @@ AV.star = svg_(
 
   /* ---------- connexion ---------- */
   function boot() {
+    if (BAD_LINK) {
+      $('#app').innerHTML = '<div class="login"><h1>🎄</h1><p class="err">Ce lien n’est pas valide. Demande-le de nouveau à la personne qui te l’a envoyé.</p></div>';
+      return;
+    }
     $('#app').innerHTML = '<div class="login"><h1>🎄</h1><p class="hint">Chargement…</p></div>';
     call('loginNames', { family: store.get('noel_family') || '' }).then(function (d) {
       if (token) {
