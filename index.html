@@ -829,7 +829,8 @@ AV.star = svg_(
       var btn = $('#f-auto', m.el);
       btn.disabled = true; btn.textContent = '⏳';
       $('#f-err', m.el).textContent = '';
-      call('fetchMeta', { url: u }).then(function (r) {
+      var slow = new Promise(function (_, no) { setTimeout(function () { no(new Error('Ce site met trop de temps à répondre. Ajoute une photo 📷 ou colle un lien d’image.')); }, 25000); });
+      Promise.race([call('fetchMeta', { url: u }), slow]).then(function (r) {
         if (r.title && !$('#f-title', m.el).value) $('#f-title', m.el).value = r.title;
         if (r.image && !imgData && !$('#f-img', m.el).value) $('#f-img', m.el).value = r.image;
         if (r.price && !$('#f-price', m.el).value) $('#f-price', m.el).value = r.price;
