@@ -851,6 +851,9 @@ AV.star = svg_(
     preview();
 
     $('#f-save', m.el).onclick = function () {
+      var sb = this;
+      if (sb.disabled) return;
+      sb.disabled = true; sb.dataset.t = sb.textContent; sb.textContent = '⏳ Enregistrement…';
       var p = {
         id: entry ? entry.id : '',
         title: $('#f-title', m.el).value, url: $('#f-url', m.el).value, image: imgData || $('#f-img', m.el).value,
@@ -863,6 +866,7 @@ AV.star = svg_(
         burst(innerWidth / 2, innerHeight / 2, 18); return refresh(true);
       }).catch(function (er) {
         if (er.code === 'SESSION') return logout();
+        sb.disabled = false; sb.textContent = sb.dataset.t;
         $('#f-err', m.el).textContent = er.message;
       });
     };
